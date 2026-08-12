@@ -2,29 +2,36 @@
    SUPABASE
 ========================================= */
 
-const SUPABASE_URL =
-  "여기에_SUPABASE_URL";
+let db = null;
 
-const SUPABASE_KEY =
-  "여기에_SUPABASE_PUBLISHABLE_KEY";
+const SUPABASE_URL = "여기에_SUPABASE_URL";
+const SUPABASE_KEY = "여기에_SUPABASE_PUBLISHABLE_KEY";
 
-
-const db =
-  window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-  );
+try {
+  if (
+    window.supabase &&
+    SUPABASE_URL.startsWith("http") &&
+    !SUPABASE_URL.includes("여기에")
+  ) {
+    db = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY
+    );
+  }
+} catch (error) {
+  console.log("Supabase 연결 대기 중");
+}
 
 
 /* =========================================
-   VARIABLES
+   MEMORY VARIABLES
 ========================================= */
 
 let currentStep = 1;
 
 let selectedEmotions = [];
 
-let selectedFeeling = [];
+let selectedFeeling = "";
 
 let selectedCategory = "";
 
@@ -34,25 +41,24 @@ let currentFilter = "전체";
 
 
 /* =========================================
-   PAGE MOVE
+   화면 이동
 ========================================= */
 
 function goTo(id) {
 
-  const element =
-    document.getElementById(id);
+  const element = document.getElementById(id);
 
-  if (!element) return;
-
-  element.scrollIntoView({
-    behavior: "smooth"
-  });
+  if (element) {
+    element.scrollIntoView({
+      behavior: "smooth"
+    });
+  }
 
 }
 
 
 /* =========================================
-   STEP
+   기억 단계 표시
 ========================================= */
 
 function showStep(step) {
@@ -70,91 +76,89 @@ function showStep(step) {
 
   /* 모든 단계 숨기기 */
 
-  document
-    .querySelectorAll(".memory-step")
-    .forEach((item) => {
+  const steps =
+    document.querySelectorAll(".memory-step");
 
-      item.classList.remove("active");
+  steps.forEach(function(item) {
 
-    });
+    item.classList.remove("active");
+
+  });
 
 
-  /* 현재 단계만 표시 */
+  /* 현재 단계 표시 */
 
   const current =
     document.querySelector(
-      `.memory-step[data-step="${step}"]`
+      '.memory-step[data-step="' + step + '"]'
     );
 
-
   if (current) {
-
     current.classList.add("active");
-
   }
 
 
-  /* dots */
+  /* 점 */
 
   const dots =
     document.querySelectorAll(
       ".progress-dots i"
     );
 
-
-  dots.forEach((dot, index) => {
+  dots.forEach(function(dot, index) {
 
     if (index === step - 1) {
-
       dot.classList.add("active");
-
     } else {
-
       dot.classList.remove("active");
-
     }
 
   });
 
 
-  /* 이전 */
+  /* 이전 버튼 */
 
   const prev =
     document.getElementById("prevBtn");
 
+  if (prev) {
 
-  if (step === 1) {
-
-    prev.style.visibility = "hidden";
-
-  } else {
-
-    prev.style.visibility = "visible";
+    if (step === 1) {
+      prev.style.visibility = "hidden";
+    } else {
+      prev.style.visibility = "visible";
+    }
 
   }
 
 
-  /* 다음 */
+  /* 다음 / 저장 버튼 */
 
   const next =
     document.getElementById("nextBtn");
 
-
   const save =
     document.getElementById("saveBtn");
 
-
   if (step === 4) {
 
-    next.style.display = "none";
+    if (next) {
+      next.style.display = "none";
+    }
 
-    save.style.display = "block";
+    if (save) {
+      save.style.display = "block";
+    }
 
   } else {
 
-    next.style.display = "block";
+    if (next) {
+      next.style.display = "block";
+    }
 
-    save.style.display = "none";
+    if (save) {
+      save.style.display = "none";
+    }
 
   }
 
@@ -162,132 +166,111 @@ function showStep(step) {
 
 
 /* =========================================
-   NEXT
+   다음 버튼
 ========================================= */
 
-document
-  .getElementById("nextBtn")
-  .addEventListener("click", function () {
+function nextStep() {
 
-    /* STEP 1 */
+  /* 1단계 */
 
-    if (currentStep === 1) {
+  if (currentStep === 1) {
 
-      const input =
-        document.getElementById(
-          "memoryInput"
-        );
+    const input =
+      document.getElementById("memoryInput");
 
+    if (!input || !input.value.trim()) {
 
-      if (!input.value.trim()) {
+      alert("먼저 기억을 적어주세요.");
 
-        alert(
-          "먼저 기억을 적어주세요."
-        );
-
+      if (input) {
         input.focus();
-
-        return;
-
       }
 
+      return;
     }
 
+  }
 
-    /* STEP 2 */
 
-    if (currentStep === 2) {
+  /* 2단계 */
 
-      if (
-        selectedEmotions.length === 0
-      ) {
+  if (currentStep === 2) {
 
-        alert(
-          "감정을 하나 이상 선택해주세요."
-        );
+    if (selectedEmotions.length === 0) {
 
-        return;
+      alert("감정을 하나 이상 선택해주세요.");
 
-      }
-
+      return;
     }
 
+  }
 
-    /* STEP 3 */
 
-    if (currentStep === 3) {
+  /* 3단계 */
 
-      if (
-        selectedFeeling.length === 0
-      ) {
+  if (currentStep === 3) {
 
-        alert(
-          "지금의 기분을 하나 선택해주세요."
-        );
+    if (!selectedFeeling) {
 
-        return;
+      alert("지금의 기분을 하나 선택해주세요.");
 
-      }
-
+      return;
     }
 
+  }
 
-    showStep(currentStep + 1);
 
-  });
+  /* 실제 다음 단계 */
+
+  showStep(currentStep + 1);
+
+}
 
 
 /* =========================================
-   PREVIOUS
+   이전 버튼
 ========================================= */
 
-document
-  .getElementById("prevBtn")
-  .addEventListener("click", function () {
+function previousStep() {
 
-    showStep(currentStep - 1);
+  showStep(currentStep - 1);
 
-  });
+}
 
 
 /* =========================================
-   EMOTIONS
+   감정 선택
 ========================================= */
 
-document
-  .querySelectorAll(
-    "[data-emotion]"
-  )
-  .forEach((button) => {
+function setupEmotions() {
+
+  const buttons =
+    document.querySelectorAll(
+      "[data-emotion]"
+    );
+
+  buttons.forEach(function(button) {
 
     button.addEventListener(
       "click",
-      function () {
+      function() {
 
         const emotion =
           this.dataset.emotion;
 
 
-        this.classList.toggle(
-          "selected"
-        );
+        this.classList.toggle("selected");
 
 
         if (
-          this.classList.contains(
-            "selected"
-          )
+          this.classList.contains("selected")
         ) {
 
           if (
-            !selectedEmotions.includes(
-              emotion
-            )
+            !selectedEmotions.includes(emotion)
           ) {
 
-            selectedEmotions.push(
-              emotion
-            );
+            selectedEmotions.push(emotion);
 
           }
 
@@ -295,7 +278,9 @@ document
 
           selectedEmotions =
             selectedEmotions.filter(
-              item => item !== emotion
+              function(item) {
+                return item !== emotion;
+              }
             );
 
         }
@@ -305,80 +290,71 @@ document
 
   });
 
+}
+
 
 /* =========================================
-   CURRENT FEELING
+   지금의 기분
 ========================================= */
 
-document
-  .querySelectorAll(
-    "[data-feeling]"
-  )
-  .forEach((button) => {
+function setupFeelings() {
+
+  const buttons =
+    document.querySelectorAll(
+      "[data-feeling]"
+    );
+
+  buttons.forEach(function(button) {
 
     button.addEventListener(
       "click",
-      function () {
+      function() {
 
-        document
-          .querySelectorAll(
-            "[data-feeling]"
-          )
-          .forEach((item) => {
-
-            item.classList.remove(
-              "selected"
-            );
-
-          });
-
-
-        this.classList.add(
-          "selected"
+        buttons.forEach(
+          function(item) {
+            item.classList.remove("selected");
+          }
         );
 
 
-        selectedFeeling = [
-          this.dataset.feeling
-        ];
+        this.classList.add("selected");
+
+        selectedFeeling =
+          this.dataset.feeling;
 
       }
     );
 
   });
 
+}
+
 
 /* =========================================
-   CATEGORY
+   카테고리
 ========================================= */
 
-document
-  .querySelectorAll(
-    "[data-category]"
-  )
-  .forEach((button) => {
+function setupCategories() {
+
+  const buttons =
+    document.querySelectorAll(
+      "[data-category]"
+    );
+
+  buttons.forEach(function(button) {
 
     button.addEventListener(
       "click",
-      function () {
+      function() {
 
-        document
-          .querySelectorAll(
-            ".category-grid [data-category]"
-          )
-          .forEach((item) => {
-
-            item.classList.remove(
-              "selected"
-            );
-
-          });
-
-
-        this.classList.add(
-          "selected"
+        buttons.forEach(
+          function(item) {
+            item.classList.remove("selected");
+          }
         );
 
+
+        this.classList.add("selected");
 
         selectedCategory =
           this.dataset.category;
@@ -388,148 +364,144 @@ document
 
   });
 
-
-/* =========================================
-   SAVE MEMORY
-========================================= */
-
-document
-  .getElementById("saveBtn")
-  .addEventListener(
-    "click",
-    async function () {
-
-      const memory =
-        document
-          .getElementById(
-            "memoryInput"
-          )
-          .value
-          .trim();
-
-
-      const reflection =
-        document
-          .getElementById(
-            "reflectionInput"
-          )
-          .value
-          .trim();
-
-
-      if (!memory) {
-
-        showStep(1);
-
-        alert(
-          "기억을 적어주세요."
-        );
-
-        return;
-
-      }
-
-
-      if (!selectedCategory) {
-
-        alert(
-          "기억의 카테고리를 선택해주세요."
-        );
-
-        return;
-
-      }
-
-
-      this.disabled = true;
-
-      this.textContent =
-        "저장하는 중...";
-
-
-      const {
-        data,
-        error
-      } = await db
-        .from("memories")
-        .insert({
-
-          memory: memory,
-
-          emotions:
-            selectedEmotions.join(", "),
-
-          current_feeling:
-            selectedFeeling.join(", "),
-
-          reflection:
-            reflection,
-
-          category:
-            selectedCategory
-
-        })
-        .select()
-        .single();
-
-
-      this.disabled = false;
-
-      this.textContent =
-        "기억 남기기";
-
-
-      if (error) {
-
-        console.error(error);
-
-        alert(
-          "저장에 실패했습니다.\n\n" +
-          "Supabase 설정을 확인해주세요."
-        );
-
-        return;
-
-      }
-
-
-      /* 성공 메시지 */
-
-      const message =
-        document.getElementById(
-          "saveMessage"
-        );
-
-
-      message.style.display = "block";
-
-      message.innerHTML =
-        "✓ 기억이 남겨졌어요.<br>" +
-        "다른 사람들도 이 기억을 볼 수 있습니다.";
-
-
-      /* 초기화 */
-
-      resetMemoryForm();
-
-
-      /* archive 이동 */
-
-      setTimeout(() => {
-
-        goTo("archive");
-
-      }, 700);
-
-    }
-  );
+}
 
 
 /* =========================================
-   RESET
+   기억 저장
 ========================================= */
 
-function resetMemoryForm() {
+async function saveMemory() {
+
+  const memoryInput =
+    document.getElementById("memoryInput");
+
+  const reflectionInput =
+    document.getElementById("reflectionInput");
+
+
+  const memory =
+    memoryInput.value.trim();
+
+  const reflection =
+    reflectionInput.value.trim();
+
+
+  if (!memory) {
+
+    showStep(1);
+
+    alert("기억을 적어주세요.");
+
+    return;
+
+  }
+
+
+  if (!selectedCategory) {
+
+    alert("기억의 카테고리를 선택해주세요.");
+
+    return;
+
+  }
+
+
+  /* Supabase가 아직 연결되지 않은 경우 */
+
+  if (!db) {
+
+    alert(
+      "기억 회상 기능은 정상적으로 작동합니다.\n\n" +
+      "다만 아직 Supabase 연결 정보가 입력되지 않았어요."
+    );
+
+    return;
+
+  }
+
+
+  const saveButton =
+    document.getElementById("saveBtn");
+
+  saveButton.disabled = true;
+
+  saveButton.textContent = "저장 중...";
+
+
+  const result =
+    await db
+      .from("memories")
+      .insert({
+
+        memory: memory,
+
+        emotions:
+          selectedEmotions.join(", "),
+
+        current_feeling:
+          selectedFeeling,
+
+        reflection:
+          reflection,
+
+        category:
+          selectedCategory
+
+      })
+      .select()
+      .single();
+
+
+  saveButton.disabled = false;
+
+  saveButton.textContent = "기억 남기기";
+
+
+  if (result.error) {
+
+    console.error(result.error);
+
+    alert(
+      "기억을 저장하지 못했어요.\n" +
+      "Supabase 설정을 확인해주세요."
+    );
+
+    return;
+
+  }
+
+
+  const message =
+    document.getElementById(
+      "saveMessage"
+    );
+
+
+  message.style.display = "block";
+
+  message.textContent =
+    "✓ 기억이 남겨졌어요.";
+
+
+  resetMemory();
+
+  await loadMemories();
+
+  setTimeout(function() {
+
+    goTo("archive");
+
+  }, 500);
+
+}
+
+
+/* =========================================
+   기억 초기화
+========================================= */
+
+function resetMemory() {
 
   document.getElementById(
     "memoryInput"
@@ -543,7 +515,7 @@ function resetMemoryForm() {
 
   selectedEmotions = [];
 
-  selectedFeeling = [];
+  selectedFeeling = "";
 
   selectedCategory = "";
 
@@ -552,11 +524,9 @@ function resetMemoryForm() {
     .querySelectorAll(
       ".emotion-grid button"
     )
-    .forEach((button) => {
+    .forEach(function(button) {
 
-      button.classList.remove(
-        "selected"
-      );
+      button.classList.remove("selected");
 
     });
 
@@ -565,11 +535,9 @@ function resetMemoryForm() {
     .querySelectorAll(
       ".category-grid button"
     )
-    .forEach((button) => {
+    .forEach(function(button) {
 
-      button.classList.remove(
-        "selected"
-      );
+      button.classList.remove("selected");
 
     });
 
@@ -580,52 +548,43 @@ function resetMemoryForm() {
 
 
 /* =========================================
-   LOAD MEMORIES
+   기억 불러오기
 ========================================= */
 
 async function loadMemories() {
 
-  const list =
-    document.getElementById(
-      "memoryList"
-    );
+  if (!db) {
 
-
-  list.innerHTML =
-    `<div class="empty">
-      기억을 불러오는 중...
-    </div>`;
-
-
-  const {
-    data,
-    error
-  } = await db
-    .from("memories")
-    .select("*")
-    .order(
-      "created_at",
-      {
-        ascending: false
-      }
-    );
-
-
-  if (error) {
-
-    console.error(error);
-
-    list.innerHTML =
-      `<div class="empty">
-        기억을 불러오지 못했습니다.
-      </div>`;
+    renderMemories();
 
     return;
 
   }
 
 
-  memories = data || [];
+  const result =
+    await db
+      .from("memories")
+      .select("*")
+      .order(
+        "created_at",
+        {
+          ascending: false
+        }
+      );
+
+
+  if (result.error) {
+
+    console.error(result.error);
+
+    return;
+
+  }
+
+
+  memories =
+    result.data || [];
 
 
   renderMemories();
@@ -634,7 +593,7 @@ async function loadMemories() {
 
 
 /* =========================================
-   RENDER
+   기억 표시
 ========================================= */
 
 function renderMemories() {
@@ -644,15 +603,16 @@ function renderMemories() {
       "memoryList"
     );
 
-
   const count =
     document.getElementById(
       "memoryCount"
     );
 
 
-  count.textContent =
-    memories.length;
+  if (count) {
+    count.textContent =
+      memories.length;
+  }
 
 
   let filtered =
@@ -663,9 +623,14 @@ function renderMemories() {
 
     filtered =
       memories.filter(
-        memory =>
-          memory.category ===
-          currentFilter
+        function(memory) {
+
+          return (
+            memory.category ===
+            currentFilter
+          );
+
+        }
       );
 
   }
@@ -673,11 +638,12 @@ function renderMemories() {
 
   if (filtered.length === 0) {
 
-    list.innerHTML =
-      `<div class="empty">
+    list.innerHTML = `
+      <div class="empty">
         아직 남겨진 기억이 없어요.<br>
         첫 번째 기억을 남겨보세요.
-      </div>`;
+      </div>
+    `;
 
     return;
 
@@ -688,7 +654,7 @@ function renderMemories() {
 
 
   filtered.forEach(
-    (memory, index) => {
+    function(memory, index) {
 
       const card =
         document.createElement(
@@ -709,9 +675,7 @@ function renderMemories() {
         </div>
 
         <h3>
-          “${safe(
-            memory.memory
-          )}”
+          “${safe(memory.memory)}”
         </h3>
 
         ${
@@ -719,9 +683,7 @@ function renderMemories() {
             ? `
               <div class="memory-emotions">
                 당시의 감정 ·
-                ${safe(
-                  memory.emotions
-                )}
+                ${safe(memory.emotions)}
               </div>
             `
             : ""
@@ -732,9 +694,7 @@ function renderMemories() {
             ? `
               <div class="memory-emotions">
                 지금의 기분 ·
-                ${safe(
-                  memory.current_feeling
-                )}
+                ${safe(memory.current_feeling)}
               </div>
             `
             : ""
@@ -745,9 +705,7 @@ function renderMemories() {
             ? `
               <div class="memory-reflection">
                 기억이 남긴 생각<br>
-                “${safe(
-                  memory.reflection
-                )}”
+                “${safe(memory.reflection)}”
               </div>
             `
             : ""
@@ -757,9 +715,7 @@ function renderMemories() {
           memory.category
             ? `
               <div class="memory-category">
-                ${safe(
-                  memory.category
-                )}
+                ${safe(memory.category)}
               </div>
             `
             : ""
@@ -777,58 +733,64 @@ function renderMemories() {
 
 
 /* =========================================
-   FILTER
+   카테고리 필터
 ========================================= */
 
-document
-  .querySelectorAll(
-    "[data-filter]"
-  )
-  .forEach((button) => {
+function setupFilters() {
 
-    button.addEventListener(
-      "click",
-      function () {
+  document
+    .querySelectorAll(
+      "[data-filter]"
+    )
+    .forEach(function(button) {
 
-        document
-          .querySelectorAll(
-            "[data-filter]"
-          )
-          .forEach(
-            item =>
-              item.classList.remove(
-                "active"
-              )
-          );
+      button.addEventListener(
+        "click",
+        function() {
 
-
-        this.classList.add(
-          "active"
-        );
+          document
+            .querySelectorAll(
+              "[data-filter]"
+            )
+            .forEach(
+              function(item) {
+                item.classList.remove(
+                  "active"
+                );
+              }
+            );
 
 
-        currentFilter =
-          this.dataset.filter;
+          this.classList.add("active");
 
 
-        renderMemories();
+          currentFilter =
+            this.dataset.filter;
 
-      }
-    );
 
-  });
+          renderMemories();
+
+        }
+      );
+
+    });
+
+}
 
 
 /* =========================================
-   REALTIME
+   실시간 업데이트
 ========================================= */
 
 function startRealtime() {
 
+  if (!db) {
+    return;
+  }
+
+
   db
-    .channel(
-      "memories-live"
-    )
+    .channel("memories-live")
 
     .on(
       "postgres_changes",
@@ -837,13 +799,18 @@ function startRealtime() {
         schema: "public",
         table: "memories"
       },
-      function (payload) {
+      function(payload) {
 
         const exists =
           memories.some(
-            memory =>
-              memory.id ===
-              payload.new.id
+            function(memory) {
+
+              return (
+                memory.id ===
+                payload.new.id
+              );
+
+            }
           );
 
 
@@ -852,7 +819,6 @@ function startRealtime() {
           memories.unshift(
             payload.new
           );
-
 
           renderMemories();
 
@@ -867,59 +833,101 @@ function startRealtime() {
 
 
 /* =========================================
-   ESCAPE HTML
+   HTML 안전 처리
 ========================================= */
 
 function safe(value) {
 
   return String(value || "")
-    .replace(
-      /&/g,
-      "&amp;"
-    )
-    .replace(
-      /</g,
-      "&lt;"
-    )
-    .replace(
-      />/g,
-      "&gt;"
-    )
-    .replace(
-      /"/g,
-      "&quot;"
-    )
-    .replace(
-      /'/g,
-      "&#039;"
-    );
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 
 }
 
 
 /* =========================================
-   EMPATHY
+   공감
 ========================================= */
 
 function empathy(message) {
 
-  document.getElementById(
-    "empathyResult"
-  ).textContent =
-    `“${message}” 마음이 전달되었어요.`;
+  const result =
+    document.getElementById(
+      "empathyResult"
+    );
+
+
+  result.textContent =
+    "“" + message + "” 마음이 전달되었어요.";
 
 }
 
 
 /* =========================================
-   START
+   시작
 ========================================= */
 
 document.addEventListener(
   "DOMContentLoaded",
-  function () {
+  function() {
+
+    /* 가장 먼저 회상 단계 실행 */
 
     showStep(1);
+
+
+    /* 버튼 연결 */
+
+    const next =
+      document.getElementById("nextBtn");
+
+    const prev =
+      document.getElementById("prevBtn");
+
+    const save =
+      document.getElementById("saveBtn");
+
+
+    if (next) {
+
+      next.addEventListener(
+        "click",
+        nextStep
+      );
+
+    }
+
+
+    if (prev) {
+
+      prev.addEventListener(
+        "click",
+        previousStep
+      );
+
+    }
+
+
+    if (save) {
+
+      save.addEventListener(
+        "click",
+        saveMemory
+      );
+
+    }
+
+
+    setupEmotions();
+
+    setupFeelings();
+
+    setupCategories();
+
+    setupFilters();
 
     loadMemories();
 
